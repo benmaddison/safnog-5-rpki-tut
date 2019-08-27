@@ -1,0 +1,65 @@
+version 20190606.224121_builder.r1033375;
+interfaces {
+    lo0 {
+        unit 0 {
+            family iso {
+                address {{ my.isis.net }};
+            }
+        }
+    }
+}
+routing-options {
+    router-id {{ my.loopback.ipv4 }};
+    autonomous-system 65000;
+}
+protocols {
+    isis {
+        level 1 disable;
+        interface lo.0 {
+            passive;
+        }
+{% for interface in my.isis.interfaces %}
+        interface {{ interface }} {
+            point-to-point;
+        }
+{% endfor %}
+    }
+    bgp {
+        group ibgp4 {
+            type internal;
+            local-address {{ my.loopback.ipv4 }};
+            family inet {
+                unicast;
+            }
+{% for neighbor in other %}
+            neighbor {{ neighbor.loopback.ipv4 }};
+{% endfor %}
+        }
+        group ibgp6 {
+            type internal;
+            local-address {{ my.loopback.ipv6 }};
+            family inet6 {
+                unicast;
+            }
+{% for neighbor in other %}
+            neighbor {{ neighbor.loopback.ipv6 }};
+{% endfor %}
+        }
+        group ebgp4 {
+            type external;
+            family inet {
+                unicast;
+            }
+            peer-as 65001;
+            neighbor 192.168.0.2;
+        }
+        group ebgp6 {
+            type external;
+            family inet6 {
+                unicast;
+            }
+            peer-as 65001;
+            neighbor 2001:db8:f00d::2;
+        }
+    }
+}

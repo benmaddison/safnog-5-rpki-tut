@@ -1,0 +1,70 @@
+version: "2.4"
+services:
+  ccc:
+    hostname: ccc
+    build:
+      context: ccc
+    init: true
+    networks:
+      internal:
+        ipv4_address: 10.1.1.100
+        ipv6_address: 2001:db8:1:1::100
+  j1:
+    hostname: j1
+    extends:
+      file: crpd/crpd-service.yml
+      service: crpd
+    environment:
+      LOOPBACK_ISO: 49.0000.0000.0000.0001.00
+      LOOPBACK_IPV4: 10.0.0.1
+      LOOPBACK_IPV6: 2001:db8::1
+    networks:
+      internal:
+        ipv4_address: 10.1.1.1
+        ipv6_address: 2001:db8:1:1::1
+  j2:
+    hostname: j2
+    extends:
+      file: crpd/crpd-service.yml
+      service: crpd
+    environment:
+      LOOPBACK_ISO: 49.0000.0000.0000.0002.00
+      LOOPBACK_IPV4: 10.0.0.2
+      LOOPBACK_IPV6: 2001:db8::2
+    networks:
+      internal:
+        priority: 0
+        ipv4_address: 10.1.1.2
+        ipv6_address: 2001:db8:1:1::2
+      transit:
+        priority: 1
+        ipv4_address: 192.168.0.1
+        ipv6_address: 2001:db8:ffff:ffff::1
+  t1:
+    hostname: t1
+    build:
+      context: mrtplay
+    init: true
+    networks:
+      transit:
+        ipv4_address: 192.168.0.2
+        ipv6_address: 2001:db8:ffff:ffff::2
+networks:
+  internal:
+    driver: bridge
+    enable_ipv6: true
+    ipam:
+      config:
+        - subnet: 10.1.1.0/24
+          gateway: 10.1.1.254
+        - subnet: 2001:db8:1:1::/64
+          gateway: 2001:db8:1:1::ffff
+  transit:
+    driver: bridge
+    enable_ipv6: true
+    ipam:
+      config:
+        - subnet: 192.168.0.0/24
+          gateway: 192.168.0.254
+        - subnet: 2001:db8:ffff:ffff::/64
+          gateway: 2001:db8:ffff:ffff::ffff

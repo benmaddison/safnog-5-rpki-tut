@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# set loopback ip addresses
+if [ ! -z "${LOOPBACK_IPV4}" ]; then
+  ip -4 addr add "${LOOPBACK_IPV4}/32" dev lo &&
+    echo "ipv4 loopback set: ${LOOPBACK_IPV4}"
+fi
+if [ ! -z "${LOOPBACK_IPV6}" ]; then
+  ip -6 addr add "${LOOPBACK_IPV6}/128" dev lo &&
+    echo "ipv6 loopback set: ${LOOPBACK_IPV6}"
+fi
+
+# enable root login and netconf subsystem
+echo "root:safnog" | chpasswd
+cat <<EOF > /etc/ssh/sshd_config
+# standard port for login
+Port 22
+PermitRootLogin = yes
+# netconf only port
+Port 830
+Subsystem netconf /usr/bin/netconf
+Match LocalPort 830
+AllowTCPForwarding no
+X11Forwarding no
+ForceCommand netconf
+EOF
+# restart ssh
+service ssh restart

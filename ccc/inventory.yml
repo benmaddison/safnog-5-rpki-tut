@@ -1,0 +1,18 @@
+- name: j1
+  vendor: junos
+  isis:
+    net: 49.0000.0000.0000.0001.00
+    interfaces:
+      - eth0
+  loopback:
+    ipv4: 10.0.0.1
+    ipv6: 2001:db8::1
+- name: j2
+  vendor: junos
+  isis:
+    net: 49.0000.0000.0000.0002.00
+    interfaces:
+      - eth0
+  loopback:
+    ipv4: 10.0.0.2
+    ipv6: 2001:db8::2

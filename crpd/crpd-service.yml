@@ -1,0 +1,6 @@
+version: "2.4"
+services:
+  crpd:
+    build:
+      context: .
+    privileged: true
