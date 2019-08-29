@@ -44,11 +44,31 @@ services:
     hostname: t1
     build:
       context: mrtplay
+      args:
+        PEER_AS: 3491
+        IPV4_NEXTHOP: 192.168.0.2
+        IPV6_NEXTHOP: 2001:db8:ffff:ffff::2
     init: true
     networks:
       transit:
         ipv4_address: 192.168.0.2
         ipv6_address: 2001:db8:ffff:ffff::2
+  rp1:
+    hostname: rp1
+    build:
+      context: ripe-validator
+    networks:
+      internal:
+        ipv4_address: 10.1.1.201
+        ipv6_address: 2001:db8:1:1::201
+  rp2:
+    hostname: rp2
+    image: ubuntu:latest
+    entrypoint: /bin/sh -c "while true; do sleep 1; done"
+    networks:
+      internal:
+        ipv4_address: 10.1.1.202
+        ipv6_address: 2001:db8:1:1::202
 networks:
   internal:
     driver: bridge

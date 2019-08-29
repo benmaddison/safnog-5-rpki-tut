@@ -1,27 +1,33 @@
-FROM ubuntu:latest
+# BUILD stage
+FROM python:3-buster as build
+
+ARG PEER_AS
+ARG IPV4_NEXTHOP
+ARG IPV6_NEXTHOP
 
 WORKDIR /root
 
-RUN apt update -q && \
-    apt install -yq python python-pip
+RUN pip install mrtparse
 
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+COPY mrt2exabgp.py .
+RUN chmod +x mrt2exabgp.py
+
+COPY latest-bview.gz .
+RUN ./mrt2exabgp.py -p ${PEER_AS} -4 ${IPV4_NEXTHOP} -s -G -P latest-bview.gz > announce4.py
+RUN ./mrt2exabgp.py -p ${PEER_AS} -6 ${IPV6_NEXTHOP} -s -G -P latest-bview.gz > announce6.py
+
+# FINAL stage
+FROM python:3-buster
+
+RUN pip install exabgp
 
 WORKDIR /usr/local/run/exabgp
 RUN mkfifo exabgp.in exabgp.out
 RUN chmod 600 exabgp.*
-# RUN chown nobody /usr/local/run/exabgp/exabgp.*
 
-# RUN chown nobody announce.py
 WORKDIR /usr/local/etc/exabgp
 COPY exabgp.* ./
-COPY announce.py .
-RUN chmod +x announce.py
-
-# RUN chmod +x mrt2exabgp.py
-# RUN ./mrt2exabgp.py
-# ENTRYPOINT ./mrt2exabgp.py -G 1000 latest-bview.gz
+COPY --from=build /root/announce*.py ./
+RUN chmod +x announce*.py
 
 ENTRYPOINT exabgp /usr/local/etc/exabgp/exabgp.conf
-# ENTRYPOINT sh -c "while true; do sleep 1; done"
