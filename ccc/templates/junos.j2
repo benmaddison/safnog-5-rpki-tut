@@ -8,9 +8,68 @@ interfaces {
         }
     }
 }
+policy-options {
+    policy-statement ebgp-in {
+{% if policy == "none" %}
+        then accept;
+{% else %}
+        term valid {
+            from validation-database valid;
+            then {
+                community add rpki-ov-valid;
+                accept;
+            }
+        }
+        term notfound {
+            from validation-database unknown;
+            then {
+                community add rpki-ov-notfound;
+                accept;
+            }
+        }
+        term invalid {
+            from validation-database invalid;
+{% if policy == "report" %}
+            then {
+                community add rpki-ov-invalid;
+                accept;
+            }
+{% else %}
+            then reject;
+{% endif %}
+        }
+{% endif %}
+    }
+    policy-statement ebgp-out {
+        then accept;
+    }
+    policy-statement ibgp-in {
+        then accept;
+    }
+    policy-statement ibgp-out {
+        then accept;
+    }
+{% if policy != "none" %}
+    community rpki-ov-invalid members 0x4300:0.0.0.0:2;
+    community rpki-ov-notfound members 0x4300:0.0.0.0:1;
+    community rpki-ov-valid members 0x4300:0.0.0.0:0;
+{% endif %}
+}
 routing-options {
     router-id {{ my.loopback.ipv4 }};
     autonomous-system 65000;
+{% if policy != "none" %}
+    validation {
+        group rpki-ov {
+            session 2001:db8:1:1::201 {
+                port 8323;
+            }
+            session 2001:db8:1:1::202 {
+                port 8323;
+            }
+        }
+    }
+{% endif %}
 }
 protocols {
     isis {
@@ -31,6 +90,8 @@ protocols {
             family inet {
                 unicast;
             }
+            import ibgp-in;
+            export ibgp-out;
 {% for neighbor in other %}
             neighbor {{ neighbor.loopback.ipv4 }};
 {% endfor %}
@@ -41,6 +102,8 @@ protocols {
             family inet6 {
                 unicast;
             }
+            import ibgp-in;
+            export ibgp-out;
 {% for neighbor in other %}
             neighbor {{ neighbor.loopback.ipv6 }};
 {% endfor %}
@@ -50,16 +113,26 @@ protocols {
             family inet {
                 unicast;
             }
-            peer-as 65001;
-            neighbor 192.168.0.2;
+            import ebgp-in;
+            export ebgp-out;
+{% for neighbor in my.neighbors %}
+            neighbor {{ neighbor.ipv4 }} {
+                peer-as {{ neighbor.peer_as }};
+            }
+{% endfor %}
         }
         group ebgp6 {
             type external;
             family inet6 {
                 unicast;
             }
-            peer-as 65001;
-            neighbor 2001:db8:ffff:ffff::2;
+            import ebgp-in;
+            export ebgp-out;
+{% for neighbor in my.neighbors %}
+            neighbor {{ neighbor.ipv6 }} {
+                peer-as {{ neighbor.peer_as }};
+            }
+{% endfor %}
         }
     }
 }

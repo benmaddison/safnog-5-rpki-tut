@@ -7,6 +7,7 @@
   loopback:
     ipv4: 10.0.0.1
     ipv6: 2001:db8::1
+  neighbors: []
 - name: j2
   vendor: junos
   isis:
@@ -16,3 +17,7 @@
   loopback:
     ipv4: 10.0.0.2
     ipv6: 2001:db8::2
+  neighbors:
+    - peer_as: 65001
+      ipv4: 192.168.0.2
+      ipv6: 2001:db8:ffff:ffff::2

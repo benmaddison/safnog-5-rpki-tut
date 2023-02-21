@@ -13,6 +13,8 @@ RUN wget -nv https://ftp.ripe.net/tools/rpki/validator3/prod/generic/rpki-rtr-se
 RUN wget -nv https://ftp.ripe.net/tools/rpki/validator3/prod/generic/rpki-validator-${VERSION}-dist.tar.gz && \
     tar zxf rpki-validator-${VERSION}-dist.tar.gz
 
+COPY application.properties rpki-rtr-server-${VERSION}/conf/
+
 COPY entrypoint.sh .
 RUN chmod +x entrypoint.sh
 
